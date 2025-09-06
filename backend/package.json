@@ -1,19 +1,26 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
+  "description": "Mini Helpdesk backend Lambda",
+  "main": "dist/tickets.js",
   "license": "ISC",
-  "description": "",
+  "scripts": {
+    "build": "esbuild src/handlers/tickets.ts --bundle --platform=node --target=node20 --outfile=dist/tickets.js",
+    "test": "echo \"No tests configured\"",
+    "package": "mkdir -p ../infra/build && zip -j ../infra/build/tickets.zip dist/tickets.js"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1692.0",
+    "uuid": "^11.1.0"
+  },
   "devDependencies": {
+    "@types/aws-lambda": "^8.10.152",
+    "@types/jest": "^30.0.0",
     "@types/node": "^24.3.0",
     "esbuild": "^0.25.9",
+    "jest": "^30.1.1",
+    "ts-jest": "^29.4.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.2",
-    "vitest": "^3.2.4"
+    "typescript": "^5.9.2"
   }
 }
