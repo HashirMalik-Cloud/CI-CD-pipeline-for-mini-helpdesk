@@ -195,8 +195,8 @@ resource "aws_api_gateway_integration_response" "ticket_by_id_options_integratio
 # ---------------------------
 resource "aws_lambda_permission" "apigw_permissions" {
   for_each = {
-    "health"      = aws_api_gateway_resource.health_resource.id
-    "tickets"     = aws_api_gateway_resource.tickets_resource.id
+    "health"       = aws_api_gateway_resource.health_resource.id
+    "tickets"      = aws_api_gateway_resource.tickets_resource.id
     "ticket_by_id" = aws_api_gateway_resource.ticket_by_id.id
   }
 
