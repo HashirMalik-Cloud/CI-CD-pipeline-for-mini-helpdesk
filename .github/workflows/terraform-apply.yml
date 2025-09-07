@@ -36,4 +36,9 @@ jobs:
 
       - name: Terraform Apply
         working-directory: infra
-        run: terraform apply -var-file=dev.tfvars -auto-approve -no-color
+        run: |
+          if [ -f dev.tfvars ]; then
+            terraform apply -var-file=dev.tfvars -auto-approve -no-color
+          else
+            terraform apply -auto-approve -no-color
+          fi

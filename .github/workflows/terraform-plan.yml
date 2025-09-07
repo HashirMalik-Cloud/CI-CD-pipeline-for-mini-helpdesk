@@ -36,4 +36,9 @@ jobs:
 
       - name: Terraform Plan
         working-directory: infra
-        run: terraform plan -var-file=dev.tfvars -no-color
+        run: |
+          if [ -f dev.tfvars ]; then
+            terraform plan -var-file=dev.tfvars -no-color
+          else
+            terraform plan -no-color
+          fi
