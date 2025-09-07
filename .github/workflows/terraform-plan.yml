@@ -26,9 +26,13 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Init Terraform
+      - name: Init Terraform (no backend for PR checks)
         working-directory: infra
-        run: terraform init
+        run: terraform init -backend=false
+
+      - name: Validate Terraform
+        working-directory: infra
+        run: terraform validate
 
       - name: Terraform Plan
         working-directory: infra
