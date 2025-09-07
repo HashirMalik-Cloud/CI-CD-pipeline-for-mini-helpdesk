@@ -28,7 +28,12 @@ jobs:
 
       - name: Init Terraform
         working-directory: infra
-        run: terraform init
+        run: |
+          terraform init \
+            -backend-config="bucket=my-terraform-state-dev" \
+            -backend-config="key=dev/terraform.tfstate" \
+            -backend-config="region=us-east-1" \
+            -backend-config="dynamodb_table=my-terraform-locks-dev"
 
       - name: Terraform Apply
         working-directory: infra

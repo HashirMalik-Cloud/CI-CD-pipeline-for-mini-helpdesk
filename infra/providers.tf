@@ -7,12 +7,9 @@ terraform {
     random  = { source = "hashicorp/random", version = "~> 3.6" }
   }
 
-  # Backend config is provided via backend-dev.hcl at init
+  # Backend config is provided via CLI flags in GitHub Actions
   backend "s3" {
-    bucket         = "" # overridden at init
-    key            = "" # overridden at init
-    region         = "" # overridden at init
-    dynamodb_table = "" # overridden at init
+    # leave empty, values supplied via -backend-config
   }
 }
 
