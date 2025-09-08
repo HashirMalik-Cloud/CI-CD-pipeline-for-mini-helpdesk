@@ -26,7 +26,8 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Init Terraform (with remote backend)
+      # Init with backend so providers are installed and validation works
+      - name: Init Terraform
         working-directory: infra
         run: |
           terraform init \
