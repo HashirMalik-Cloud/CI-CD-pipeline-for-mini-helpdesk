@@ -26,8 +26,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      # Init with backend so providers are installed and validation works
-      - name: Init Terraform
+      - name: Init Terraform (with backend)
         working-directory: infra
         run: |
           terraform init \
@@ -35,6 +34,12 @@ jobs:
             -backend-config="key=mini-helpdesk/dev/infra.tfstate" \
             -backend-config="region=us-east-1"
 
+      # 👇 Force download of all required providers
+      - name: Terraform Providers Download
+        working-directory: infra
+        run: terraform providers mirror ./providers
+
+      # 👇 Validate after providers are installed
       - name: Validate Terraform
         working-directory: infra
         run: terraform validate
