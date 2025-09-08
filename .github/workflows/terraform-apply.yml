@@ -1,9 +1,11 @@
 name: Terraform Apply
 
 on:
-  push:
-    branches:
-      - ci-test
+  workflow_dispatch:   # only runs when you manually trigger
+  # OR, if you want auto on merge but with approval:
+  # push:
+  #   branches:
+  #     - ci-test
 
 jobs:
   terraform:
@@ -34,11 +36,11 @@ jobs:
             -backend-config="key=mini-helpdesk/dev/infra.tfstate" \
             -backend-config="region=us-east-1"
 
-      - name: Terraform Apply
+      - name: Terraform Apply (manual approval)
         working-directory: infra
         run: |
           if [ -f dev.tfvars ]; then
-            terraform apply -var-file=dev.tfvars -auto-approve -no-color
+            terraform apply -var-file=dev.tfvars -no-color
           else
-            terraform apply -auto-approve -no-color
+            terraform apply -no-color
           fi
