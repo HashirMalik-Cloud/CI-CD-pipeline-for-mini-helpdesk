@@ -31,7 +31,7 @@ jobs:
       - name: Terraform Init (with remote backend)
         working-directory: infra
         run: |
-          terraform init \
+          terraform init -upgrade \
             -backend-config="bucket=hashir-tf-remote-state" \
             -backend-config="key=mini-helpdesk/dev/infra.tfstate" \
             -backend-config="region=us-east-1"
