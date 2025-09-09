@@ -10,8 +10,8 @@ jobs:
     name: Terraform Plan
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
-      contents: read
+      id-token: write   # for OIDC
+      contents: read    # for checkout
 
     steps:
       - name: Checkout repo
@@ -43,10 +43,6 @@ jobs:
             -backend-config="key=mini-helpdesk/dev/infra.tfstate" \
             -backend-config="region=us-east-1"
 
-      - name: Terraform Validate
-        working-directory: infra
-        run: terraform validate
-
       - name: Terraform Plan
         working-directory: infra
         run: |
@@ -55,3 +51,7 @@ jobs:
           else
             terraform plan -no-color
           fi
+
+      - name: Terraform Validate
+        working-directory: infra
+        run: terraform validate
