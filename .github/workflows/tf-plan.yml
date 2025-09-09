@@ -26,20 +26,15 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.9.8
+          terraform_version: 1.9.8   # match local version
 
-      # This is the critical fix
       - name: Terraform Init (download providers + backend)
         working-directory: infra
         run: |
-          terraform init \
-            -input=false \
+          terraform init -upgrade \
             -backend-config="bucket=hashir-tf-remote-state" \
             -backend-config="key=mini-helpdesk/dev/infra.tfstate" \
             -backend-config="region=us-east-1"
-          
-          # explicitly download providers so validate works
-          terraform providers mirror .terraform/providers
 
       - name: Terraform Validate
         working-directory: infra
