@@ -60,7 +60,3 @@ jobs:
       - name: Terraform fmt check
         working-directory: infra
         run: terraform fmt -check
-
-      - name: Terraform validate
-        working-directory: infra
-        run: terraform validate

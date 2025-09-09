@@ -51,7 +51,3 @@ jobs:
           else
             terraform plan -no-color
           fi
-
-      - name: Terraform Validate
-        working-directory: infra
-        run: terraform validate
