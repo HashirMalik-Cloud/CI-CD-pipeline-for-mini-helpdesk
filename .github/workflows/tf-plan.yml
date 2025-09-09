@@ -36,9 +36,10 @@ jobs:
             -backend-config="key=mini-helpdesk/dev/infra.tfstate" \
             -backend-config="region=us-east-1"
 
-      - name: Ensure providers are installed
+      - name: Force provider installation
         working-directory: infra
-        run: terraform providers
+        run: |
+          terraform providers mirror .terraform.d/plugins
 
       - name: Terraform Validate
         working-directory: infra
