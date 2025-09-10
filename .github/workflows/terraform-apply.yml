@@ -1,8 +1,8 @@
 name: Terraform Apply
 
 on:
-  workflow_dispatch:   # only runs when you manually trigger
-  # OR, if you want auto on merge but with approval:
+  workflow_dispatch: # manual trigger for safety
+  # If you want auto-apply on merge (with approvals), uncomment below:
   # push:
   #   branches:
   #     - ci-test
@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
@@ -27,8 +27,17 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
 
-      - name: Init Terraform (with remote backend)
+      # Cache providers to speed up runs
+      - name: Cache Terraform providers
+        uses: actions/cache@v4
+        with:
+          path: infra/.terraform
+          key: ${{ runner.os }}-terraform-${{ hashFiles('infra/.terraform.lock.hcl') }}
+
+      - name: Terraform Init (with remote backend)
         working-directory: infra
         run: |
           terraform init \
@@ -40,7 +49,7 @@ jobs:
         working-directory: infra
         run: |
           if [ -f dev.tfvars ]; then
-            terraform apply -var-file=dev.tfvars -no-color
+            terraform apply -auto-approve -var-file=dev.tfvars -no-color
           else
-            terraform apply -no-color
+            terraform apply -auto-approve -no-color
           fi
