@@ -1,5 +1,13 @@
+# Node.js
 node_modules/
 dist/
 build/
-infra/build/
+
+# Terraform
 .terraform/
+*.tfstate
+*.tfstate.*
+
+
+# OS junk
+.DS_Store
