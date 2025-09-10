@@ -1,0 +1,53 @@
+name: Terraform Plan
+
+on:
+  pull_request:
+    branches:
+      - ci-test
+
+jobs:
+  terraform:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # for OIDC
+      contents: read    # for checkout
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::402298071739:role/GitHubActionsTerraformDevRole
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+
+      # Cache providers + plugin dir
+      - name: Cache Terraform providers
+        uses: actions/cache@v4
+        with:
+          path: infra/.terraform
+          key: ${{ runner.os }}-terraform-${{ hashFiles('infra/.terraform.lock.hcl') }}
+
+      - name: Terraform Init (download providers + backend)
+        working-directory: infra
+        run: |
+          terraform init \
+            -backend-config="bucket=hashir-tf-remote-state" \
+            -backend-config="key=mini-helpdesk/dev/infra.tfstate" \
+            -backend-config="region=us-east-1"
+
+      - name: Terraform Plan
+        working-directory: infra
+        run: |
+          if [ -f dev.tfvars ]; then
+            terraform plan -var-file=dev.tfvars -no-color
+          else
+            terraform plan -no-color
+          fi

@@ -1,1 +1,13 @@
-node_modules\n.dist\n.terraform\ndist\nbuild\n
+# Node.js
+node_modules/
+dist/
+build/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+
+
+# OS junk
+.DS_Store

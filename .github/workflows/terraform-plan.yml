@@ -1,0 +1,48 @@
+name: Terraform Plan
+
+on:
+  pull_request:
+    branches:
+      - ci-test
+
+jobs:
+  terraform:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # required for OIDC
+      contents: read    # required for actions/checkout
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::402298071739:role/GitHubActionsTerraformDevRole
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Init Terraform (with remote backend)
+        working-directory: infra
+        run: |
+          terraform init -upgrade \
+            -backend-config="bucket=hashir-tf-remote-state" \
+            -backend-config="key=mini-helpdesk/dev/infra.tfstate" \
+            -backend-config="region=us-east-1"
+
+      - name: Validate Terraform
+        working-directory: infra
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: infra
+        run: |
+          if [ -f dev.tfvars ]; then
+            terraform plan -var-file=dev.tfvars -no-color
+          else
+            terraform plan -no-color
+          fi
