@@ -1,0 +1,55 @@
+name: Terraform Apply
+
+on:
+  workflow_dispatch: # manual trigger for safety
+  # If you want auto-apply on merge (with approvals), uncomment below:
+  # push:
+  #   branches:
+  #     - ci-test
+
+jobs:
+  terraform:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::402298071739:role/GitHubActionsTerraformDevRole
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+
+      # Cache providers to speed up runs
+      - name: Cache Terraform providers
+        uses: actions/cache@v4
+        with:
+          path: infra/.terraform
+          key: ${{ runner.os }}-terraform-${{ hashFiles('infra/.terraform.lock.hcl') }}
+
+      - name: Terraform Init (with remote backend)
+        working-directory: infra
+        run: |
+          terraform init \
+            -backend-config="bucket=hashir-tf-remote-state" \
+            -backend-config="key=mini-helpdesk/dev/infra.tfstate" \
+            -backend-config="region=us-east-1"
+
+      - name: Terraform Apply (manual approval)
+        working-directory: infra
+        run: |
+          if [ -f dev.tfvars ]; then
+            terraform apply -auto-approve -var-file=dev.tfvars -no-color
+          else
+            terraform apply -auto-approve -no-color
+          fi
