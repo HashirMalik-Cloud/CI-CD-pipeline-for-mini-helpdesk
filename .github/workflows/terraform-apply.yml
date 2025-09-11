@@ -8,8 +8,8 @@ jobs:
     name: Terraform Apply
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
-      contents: read
+      id-token: write   # needed for OIDC
+      contents: read    # needed for checkout
 
     steps:
       - name: Checkout repo
@@ -32,7 +32,7 @@ jobs:
           path: infra/.terraform
           key: ${{ runner.os }}-terraform-${{ hashFiles('infra/.terraform.lock.hcl') }}
 
-      # ✅ Build backend before applying
+      # ✅ Build backend before applying to ensure dist/ is fresh
       - name: Install & Build Backend
         run: |
           cd backend
@@ -47,8 +47,11 @@ jobs:
             -backend-config="key=mini-helpdesk/dev/infra.tfstate" \
             -backend-config="region=us-east-1"
 
+      # ✅ Debug mode enabled so we get the exact failure reason
       - name: Terraform Apply (manual approval)
         working-directory: infra
+        env:
+          TF_LOG: DEBUG
         run: |
           if [ -f dev.tfvars ]; then
             terraform apply -auto-approve -var-file=dev.tfvars -no-color
