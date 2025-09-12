@@ -8,8 +8,8 @@ jobs:
     name: Terraform Apply
     runs-on: ubuntu-latest
     permissions:
-      id-token: write   # needed for OIDC
-      contents: read    # needed for checkout
+      id-token: write
+      contents: read
 
     steps:
       - name: Checkout repo
@@ -32,12 +32,14 @@ jobs:
           path: infra/.terraform
           key: ${{ runner.os }}-terraform-${{ hashFiles('infra/.terraform.lock.hcl') }}
 
-      # ✅ Build backend before applying to ensure dist/ is fresh
+      # ✅ Build backend before applying to ensure dist/ exists
       - name: Install & Build Backend
+        working-directory: backend
         run: |
-          cd backend
           npm ci
           npm run build
+          echo "✅ Build complete. Checking dist folder contents..."
+          ls -la dist || (echo "❌ dist folder missing!" && exit 1)
 
       - name: Terraform Init (with remote backend)
         working-directory: infra
@@ -47,7 +49,6 @@ jobs:
             -backend-config="key=mini-helpdesk/dev/infra.tfstate" \
             -backend-config="region=us-east-1"
 
-      # ✅ Apply without dev.tfvars (since no variables are needed)
       - name: Terraform Apply (manual approval)
         working-directory: infra
         env:
