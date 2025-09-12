@@ -32,26 +32,22 @@ jobs:
           path: infra/.terraform
           key: ${{ runner.os }}-terraform-${{ hashFiles('infra/.terraform.lock.hcl') }}
 
-      # ✅ Build backend before apply
+      # ✅ Build backend and fail if dist/tickets.js is missing
       - name: Install & Build Backend
         working-directory: backend
         run: |
+          set -e
           npm ci
           npm run build
-          echo "✅ Build complete. Listing dist folder:"
-          ls -lh dist || (echo "❌ dist folder missing!" && exit 1)
-
-      # ✅ Double-check dist file exists before Terraform
-      - name: Verify dist/tickets.js exists
-        run: |
-          if [ ! -f backend/dist/tickets.js ]; then
-            echo "❌ ERROR: backend/dist/tickets.js not found. Failing early."
+          echo "✅ Build complete, verifying dist folder..."
+          ls -lah dist
+          if [ ! -f dist/tickets.js ]; then
+            echo "❌ ERROR: dist/tickets.js was NOT generated. Failing pipeline."
             exit 1
-          else
-            echo "✅ Verified backend/dist/tickets.js exists"
           fi
+          echo "✅ dist/tickets.js is present"
 
-      - name: Terraform Init (with remote backend)
+      - name: Terraform Init
         working-directory: infra
         run: |
           terraform init \
