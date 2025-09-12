@@ -12,11 +12,11 @@ jobs:
       contents: read
 
     steps:
-      # ✅ Step 1: Checkout full repo (not shallow)
+      # ✅ Step 1: Checkout full repo
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # full history in case needed
+          fetch-depth: 0
 
       # ✅ Step 2: Configure AWS OIDC credentials
       - name: Configure AWS credentials (OIDC)
@@ -55,7 +55,16 @@ jobs:
           fi
           echo "✅ dist/tickets.js is present"
 
-      # ✅ Step 6: Terraform Init
+      # ✅ Step 6: Copy build artifact for Terraform
+      - name: Stage Built Lambda for Terraform
+        run: |
+          echo "📂 Copying dist/tickets.js to infra/backend-dist/ ..."
+          mkdir -p infra/backend-dist
+          cp backend/dist/tickets.js infra/backend-dist/
+          echo "✅ File copied. Contents of infra/backend-dist:"
+          ls -lah infra/backend-dist
+
+      # ✅ Step 7: Terraform Init
       - name: Terraform Init
         working-directory: infra
         run: |
@@ -65,7 +74,7 @@ jobs:
             -backend-config="key=mini-helpdesk/dev/infra.tfstate" \
             -backend-config="region=us-east-1"
 
-      # ✅ Step 7: Terraform Apply with Debug Logs
+      # ✅ Step 8: Terraform Apply with Debug Logs
       - name: Terraform Apply
         working-directory: infra
         env:

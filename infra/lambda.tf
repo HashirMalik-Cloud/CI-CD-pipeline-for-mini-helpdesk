@@ -3,7 +3,10 @@
 ########################################
 data "archive_file" "tickets_zip" {
   type        = "zip"
-  source_file = "${path.module}/../backend/dist/tickets.js"
+
+  # ✅ Changed: now look inside infra/backend-dist instead of ../backend/
+  source_file = "${path.module}/backend-dist/tickets.js"
+
   output_path = "${path.module}/build/tickets.zip"
 }
 
