@@ -1,7 +1,7 @@
 name: Terraform Apply
 
 on:
-  workflow_dispatch: # manual trigger for safety
+  workflow_dispatch: # ✅ Manual trigger for safety
 
 jobs:
   terraform:
@@ -12,51 +12,64 @@ jobs:
       contents: read
 
     steps:
+      # ✅ Step 1: Checkout full repo (not shallow)
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history in case needed
 
+      # ✅ Step 2: Configure AWS OIDC credentials
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::402298071739:role/GitHubActionsTerraformDevRole
           aws-region: us-east-1
 
+      # ✅ Step 3: Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.8
 
+      # ✅ Step 4: Cache Terraform providers
       - name: Cache Terraform providers
         uses: actions/cache@v4
         with:
           path: infra/.terraform
           key: ${{ runner.os }}-terraform-${{ hashFiles('infra/.terraform.lock.hcl') }}
 
-      # ✅ Build backend and fail if dist/tickets.js is missing
+      # ✅ Step 5: Install & Build Backend
       - name: Install & Build Backend
         working-directory: backend
         run: |
           set -e
+          echo "📦 Installing dependencies..."
           npm ci
+          echo "🔨 Building backend..."
           npm run build
           echo "✅ Build complete, verifying dist folder..."
-          ls -lah dist
+          ls -lah dist || { echo "❌ dist folder missing"; exit 1; }
           if [ ! -f dist/tickets.js ]; then
             echo "❌ ERROR: dist/tickets.js was NOT generated. Failing pipeline."
             exit 1
           fi
           echo "✅ dist/tickets.js is present"
 
+      # ✅ Step 6: Terraform Init
       - name: Terraform Init
         working-directory: infra
         run: |
+          echo "🔧 Running terraform init..."
           terraform init \
             -backend-config="bucket=hashir-tf-remote-state" \
             -backend-config="key=mini-helpdesk/dev/infra.tfstate" \
             -backend-config="region=us-east-1"
 
-      - name: Terraform Apply (manual approval)
+      # ✅ Step 7: Terraform Apply with Debug Logs
+      - name: Terraform Apply
         working-directory: infra
         env:
           TF_LOG: DEBUG
-        run: terraform apply -auto-approve -no-color
+        run: |
+          echo "🚀 Running terraform apply with debug logs..."
+          terraform apply -auto-approve -no-color || { echo "❌ Terraform apply failed"; exit 1; }
