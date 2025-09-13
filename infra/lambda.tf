@@ -3,10 +3,8 @@
 ########################################
 data "archive_file" "tickets_zip" {
   type = "zip"
-
-  # ✅ Changed: now look inside infra/backend-dist instead of ../backend/
+  # ✅ Use the staged file inside infra/backend-dist
   source_file = "${path.module}/backend-dist/tickets.js"
-
   output_path = "${path.module}/build/tickets.zip"
 }
 
