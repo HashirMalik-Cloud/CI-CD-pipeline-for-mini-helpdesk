@@ -12,7 +12,7 @@ jobs:
       contents: read
 
     steps:
-      # ✅ Step 1: Checkout full repo
+      # ✅ Step 1: Checkout repo
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
@@ -55,16 +55,28 @@ jobs:
           fi
           echo "✅ dist/tickets.js is present"
 
-      # ✅ Step 6: Copy build artifact for Terraform
+      # ✅ Step 6: Copy built file into infra/ so Terraform can access it
       - name: Stage Built Lambda for Terraform
         run: |
           echo "📂 Copying dist/tickets.js to infra/backend-dist/ ..."
           mkdir -p infra/backend-dist
           cp backend/dist/tickets.js infra/backend-dist/
-          echo "✅ File copied. Contents of infra/backend-dist:"
+          echo "✅ File copied. Listing contents of infra/backend-dist:"
           ls -lah infra/backend-dist
 
-      # ✅ Step 7: Terraform Init
+      # 🔍 Step 7: Debug - verify file presence before Terraform Init
+      - name: Debug - Verify tickets.js in infra
+        run: |
+          echo "🔍 Checking if tickets.js exists before terraform init..."
+          ls -lah infra/backend-dist || echo "❌ backend-dist missing!"
+          if [ -f infra/backend-dist/tickets.js ]; then
+            echo "✅ File exists ✅"
+          else
+            echo "❌ File is STILL missing!"
+            exit 1
+          fi
+
+      # ✅ Step 8: Terraform Init
       - name: Terraform Init
         working-directory: infra
         run: |
@@ -74,7 +86,7 @@ jobs:
             -backend-config="key=mini-helpdesk/dev/infra.tfstate" \
             -backend-config="region=us-east-1"
 
-      # ✅ Step 8: Terraform Apply with Debug Logs
+      # ✅ Step 9: Terraform Apply
       - name: Terraform Apply
         working-directory: infra
         env:
