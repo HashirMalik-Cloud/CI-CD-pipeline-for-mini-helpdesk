@@ -35,6 +35,13 @@ jobs:
           path: infra/.terraform
           key: ${{ runner.os }}-terraform-${{ hashFiles('infra/.terraform.lock.hcl') }}
 
+      # ✅ Build backend before terraform plan so we see real changes
+      - name: Install & Build Backend
+        run: |
+          cd backend
+          npm ci
+          npm run build
+
       - name: Terraform Init (download providers + backend)
         working-directory: infra
         run: |
@@ -42,6 +49,10 @@ jobs:
             -backend-config="bucket=hashir-tf-remote-state" \
             -backend-config="key=mini-helpdesk/dev/infra.tfstate" \
             -backend-config="region=us-east-1"
+
+      - name: Validate Terraform
+        working-directory: infra
+        run: terraform validate
 
       - name: Terraform Plan
         working-directory: infra

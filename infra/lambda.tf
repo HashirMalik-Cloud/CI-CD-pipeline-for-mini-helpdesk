@@ -2,8 +2,9 @@
 # Package Lambda code into a zip (from compiled JS)
 ########################################
 data "archive_file" "tickets_zip" {
-  type        = "zip"
-  source_file = "${path.module}/../backend/dist/tickets.js"
+  type = "zip"
+  # ✅ Use the staged file inside infra/backend-dist
+  source_file = "${path.module}/backend-dist/tickets.js"
   output_path = "${path.module}/build/tickets.zip"
 }
 
