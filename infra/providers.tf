@@ -16,9 +16,12 @@ terraform {
     }
   }
 
-  # Backend config is provided via CLI flags in GitHub Actions
   backend "s3" {
-    # leave empty, values supplied via -backend-config
+    bucket         = "hashir-tf-remote-state"
+    key            = "mini-helpdesk/dev/infra.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "terraform-state-locks"
+    encrypt        = true
   }
 }
 
