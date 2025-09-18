@@ -3,13 +3,14 @@ name: Frontend Deploy to S3
 on:
   push:
     branches:
-      - main
+      - main  # or 'dev' if that's where you deploy from
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -17,24 +18,18 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: npm ci
-        working-directory: ./frontend
 
-      - name: Build frontend
+      - name: Build Frontend
         run: npm run build
-        working-directory: ./frontend
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Deploy to S3
-        uses: aws-actions/s3-sync@v2
-        with:
-          bucket: ${{ secrets.AWS_S3_BUCKET }}
-          region: ${{ secrets.AWS_REGION }}
-          source-dir: ./frontend/dist
+      - name: Sync to S3
+        run: aws s3 sync dist s3://${{ secrets.AWS_S3_BUCKET }} --delete
