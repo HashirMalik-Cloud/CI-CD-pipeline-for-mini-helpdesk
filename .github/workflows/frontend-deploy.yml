@@ -9,6 +9,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: frontend  # ✅ This makes all steps run inside /frontend by default
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
