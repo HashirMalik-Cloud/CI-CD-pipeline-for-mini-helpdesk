@@ -9,10 +9,13 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # ✅ Needed for OIDC auth
+      contents: read    # ✅ Needed to read repo contents
 
     defaults:
       run:
-        working-directory: frontend  # all commands run inside frontend folder
+        working-directory: frontend  # ✅ all commands run inside frontend folder
 
     steps:
       - name: Checkout Code
