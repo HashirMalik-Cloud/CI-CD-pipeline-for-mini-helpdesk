@@ -3,8 +3,8 @@ name: Frontend Deploy to S3
 on:
   push:
     branches:
-      - develop   # deploy develop branch to staging
-      - main      # deploy main branch to production
+      - develop   # deploy develop branch (staging)
+      - main      # deploy main branch (production)
 
 jobs:
   deploy:
@@ -12,7 +12,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: frontend
+        working-directory: frontend  # all commands run inside frontend folder
 
     steps:
       - name: Checkout Code
@@ -29,19 +29,13 @@ jobs:
       - name: Build Frontend
         run: npm run build
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: arn:aws:iam::402298071739:role/GitHubActionsTerraformDevRole
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Deploy to Correct Environment
+      - name: Deploy to Single Bucket
         run: |
-          if [[ "${GITHUB_REF_NAME}" == "develop" ]]; then
-            echo "Deploying to STAGING bucket"
-            aws s3 sync dist s3://${{ secrets.AWS_S3_BUCKET_STAGING }} --delete
-          elif [[ "${GITHUB_REF_NAME}" == "main" ]]; then
-            echo "Deploying to PRODUCTION bucket"
-            aws s3 sync dist s3://${{ secrets.AWS_S3_BUCKET_PROD }} --delete
-          fi
+          echo "✅ Deploying branch '${GITHUB_REF_NAME}' to SINGLE bucket"
+          aws s3 sync dist s3://${{ secrets.AWS_S3_BUCKET }} --delete
