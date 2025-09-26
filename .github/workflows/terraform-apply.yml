@@ -10,7 +10,7 @@ jobs:
     name: Apply to Staging
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
+      id-token: write    # Required for OIDC
       contents: read
     environment: staging
 
@@ -41,17 +41,21 @@ jobs:
         working-directory: backend
         run: |
           set -e
+          echo "📦 Installing backend dependencies..."
           npm ci
+          echo "🔨 Building backend..."
           npm run build
           if [ ! -f dist/tickets.js ]; then
             echo "❌ ERROR: dist/tickets.js missing"
             exit 1
           fi
+          echo "✅ Backend build complete"
 
       - name: Copy Built Lambda to Infra
         run: |
           mkdir -p infra/backend-dist
           cp backend/dist/tickets.js infra/backend-dist/
+          echo "✅ Copied tickets.js to infra/backend-dist"
 
       - name: Terraform Init + Select Staging
         working-directory: infra
@@ -62,7 +66,11 @@ jobs:
             -backend-config="region=us-east-1"
 
           terraform workspace select staging || terraform workspace new staging
+          echo "✅ Selected Terraform workspace: staging"
 
       - name: Terraform Apply (Staging)
         working-directory: infra
-        run: terraform apply -auto-approve -no-color
+        run: |
+          terraform apply -auto-approve -no-color \
+            -var="frontend_bucket_name=${{ secrets.AWS_S3_BUCKET }}"
+          echo "✅ Terraform Apply completed for staging"
