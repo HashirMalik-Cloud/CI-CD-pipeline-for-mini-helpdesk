@@ -1,96 +1,68 @@
-name: Terraform Apply
+name: Terraform Apply (Staging)
 
 on:
-  workflow_dispatch: # ✅ Manual trigger for safety
+  push:
+    branches:
+      - main   # ✅ Run automatically for staging deploys
 
 jobs:
   terraform:
-    name: Terraform Apply
+    name: Apply to Staging
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
+    environment: staging
 
     steps:
-      # ✅ Step 1: Checkout repo
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # ✅ Step 2: Configure AWS OIDC credentials
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::402298071739:role/GitHubActionsTerraformDevRole
           aws-region: us-east-1
 
-      # ✅ Step 3: Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.8
 
-      # ✅ Step 4: Cache Terraform providers
       - name: Cache Terraform providers
         uses: actions/cache@v4
         with:
           path: infra/.terraform
           key: ${{ runner.os }}-terraform-${{ hashFiles('infra/.terraform.lock.hcl') }}
 
-      # ✅ Step 5: Install & Build Backend
       - name: Install & Build Backend
         working-directory: backend
         run: |
           set -e
-          echo "📦 Installing dependencies..."
           npm ci
-          echo "🔨 Building backend..."
           npm run build
-          echo "✅ Build complete, verifying dist folder..."
-          ls -lah dist || { echo "❌ dist folder missing"; exit 1; }
           if [ ! -f dist/tickets.js ]; then
-            echo "❌ ERROR: dist/tickets.js was NOT generated. Failing pipeline."
+            echo "❌ ERROR: dist/tickets.js missing"
             exit 1
           fi
-          echo "✅ dist/tickets.js is present"
 
-      # ✅ Step 6: Copy built file into infra/ so Terraform can access it
-      - name: Stage Built Lambda for Terraform
+      - name: Copy Built Lambda to Infra
         run: |
-          echo "📂 Copying dist/tickets.js to infra/backend-dist/ ..."
           mkdir -p infra/backend-dist
           cp backend/dist/tickets.js infra/backend-dist/
-          echo "✅ File copied. Listing contents of infra/backend-dist:"
-          ls -lah infra/backend-dist
 
-      # 🔍 Step 7: Debug - verify file presence before Terraform Init
-      - name: Debug - Verify tickets.js in infra
-        run: |
-          echo "🔍 Checking if tickets.js exists before terraform init..."
-          ls -lah infra/backend-dist || echo "❌ backend-dist missing!"
-          if [ -f infra/backend-dist/tickets.js ]; then
-            echo "✅ File exists ✅"
-          else
-            echo "❌ File is STILL missing!"
-            exit 1
-          fi
-
-      # ✅ Step 8: Terraform Init
-      - name: Terraform Init
+      - name: Terraform Init + Select Staging
         working-directory: infra
         run: |
-          echo "🔧 Running terraform init..."
           terraform init \
             -backend-config="bucket=hashir-tf-remote-state" \
-            -backend-config="key=mini-helpdesk/dev/infra.tfstate" \
+            -backend-config="key=mini-helpdesk/staging/infra.tfstate" \
             -backend-config="region=us-east-1"
 
-      # ✅ Step 9: Terraform Apply
-      - name: Terraform Apply
+          terraform workspace select staging || terraform workspace new staging
+
+      - name: Terraform Apply (Staging)
         working-directory: infra
-        env:
-          TF_LOG: DEBUG
-        run: |
-          echo "🚀 Running terraform apply with debug logs..."
-          terraform apply -auto-approve -no-color || { echo "❌ Terraform apply failed"; exit 1; }
+        run: terraform apply -auto-approve -no-color

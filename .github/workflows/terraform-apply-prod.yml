@@ -1,22 +1,22 @@
-name: Terraform Plan
+name: Terraform Apply (Production)
 
 on:
-  pull_request:
-    branches:
-      - develop
-      - main
+  workflow_dispatch:  # ✅ Manual trigger only
 
 jobs:
   terraform:
-    name: Terraform Plan
+    name: Apply to Production
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
+    environment: production  # ✅ Requires manual approval if you protect prod env
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
@@ -36,32 +36,27 @@ jobs:
           key: ${{ runner.os }}-terraform-${{ hashFiles('infra/.terraform.lock.hcl') }}
 
       - name: Install & Build Backend
+        working-directory: backend
         run: |
-          cd backend
+          set -e
           npm ci
           npm run build
 
-      - name: Terraform Init + Workspace Select
+      - name: Copy Built Lambda to Infra
+        run: |
+          mkdir -p infra/backend-dist
+          cp backend/dist/tickets.js infra/backend-dist/
+
+      - name: Terraform Init + Select Prod
         working-directory: infra
         run: |
-          # Determine workspace and backend key based on PR target branch
-          if [[ "${GITHUB_BASE_REF}" == "main" ]]; then
-            WORKSPACE="prod"
-          else
-            WORKSPACE="staging"
-          fi
-
           terraform init \
             -backend-config="bucket=hashir-tf-remote-state" \
-            -backend-config="key=mini-helpdesk/${WORKSPACE}/infra.tfstate" \
+            -backend-config="key=mini-helpdesk/prod/infra.tfstate" \
             -backend-config="region=us-east-1"
 
-          terraform workspace select $WORKSPACE || terraform workspace new $WORKSPACE
+          terraform workspace select prod || terraform workspace new prod
 
-      - name: Validate Terraform
+      - name: Terraform Apply (Prod)
         working-directory: infra
-        run: terraform validate
-
-      - name: Terraform Plan
-        working-directory: infra
-        run: terraform plan -no-color
+        run: terraform apply -auto-approve -no-color

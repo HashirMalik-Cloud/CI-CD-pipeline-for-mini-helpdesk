@@ -3,7 +3,8 @@ name: Frontend Deploy to S3
 on:
   push:
     branches:
-      - main  # or 'dev' if that's where you deploy from
+      - develop   # deploy develop branch to staging
+      - main      # deploy main branch to production
 
 jobs:
   deploy:
@@ -11,7 +12,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: frontend  # ✅ This makes all steps run inside /frontend by default
+        working-directory: frontend
 
     steps:
       - name: Checkout Code
@@ -35,5 +36,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Sync to S3
-        run: aws s3 sync dist s3://${{ secrets.AWS_S3_BUCKET }} --delete
+      - name: Deploy to Correct Environment
+        run: |
+          if [[ "${GITHUB_REF_NAME}" == "develop" ]]; then
+            echo "Deploying to STAGING bucket"
+            aws s3 sync dist s3://${{ secrets.AWS_S3_BUCKET_STAGING }} --delete
+          elif [[ "${GITHUB_REF_NAME}" == "main" ]]; then
+            echo "Deploying to PRODUCTION bucket"
+            aws s3 sync dist s3://${{ secrets.AWS_S3_BUCKET_PROD }} --delete
+          fi
