@@ -57,7 +57,7 @@ jobs:
           cp backend/dist/tickets.js infra/backend-dist/
           echo "✅ Copied tickets.js to infra/backend-dist"
 
-      - name: Terraform Init + Select Staging
+      - name: Terraform Init + Validate Workspace
         working-directory: infra
         run: |
           terraform init \
@@ -65,7 +65,13 @@ jobs:
             -backend-config="key=mini-helpdesk/staging/infra.tfstate" \
             -backend-config="region=us-east-1"
 
-          terraform workspace select staging || terraform workspace new staging
+          # Fail if staging does not exist (don't auto-create)
+          if ! terraform workspace list | grep -q "staging"; then
+            echo "❌ ERROR: Terraform workspace 'staging' does not exist. Please create it manually."
+            exit 1
+          fi
+
+          terraform workspace select staging
           echo "✅ Selected Terraform workspace: staging"
 
       - name: Terraform Apply (Staging)
