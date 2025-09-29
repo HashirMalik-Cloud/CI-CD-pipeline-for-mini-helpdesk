@@ -74,9 +74,16 @@ jobs:
           terraform workspace select staging
           echo "✅ Selected Terraform workspace: staging"
 
+          # 🚀 Unlock any stale lock automatically
+          LOCK_ID=$(terraform force-unlock -list 2>/dev/null | grep -oE '[0-9a-f-]+' || true)
+          if [ ! -z "$LOCK_ID" ]; then
+            echo "⚠️ Found stale lock ($LOCK_ID), unlocking..."
+            terraform force-unlock -force "$LOCK_ID" || true
+          fi
+
       - name: Terraform Apply (Staging)
         working-directory: infra
         run: |
-          terraform apply -auto-approve -no-color \
+          terraform apply -auto-approve -no-color -lock-timeout=5m \
             -var="frontend_bucket_name=${{ secrets.AWS_S3_BUCKET }}"
           echo "✅ Terraform Apply completed for staging"
