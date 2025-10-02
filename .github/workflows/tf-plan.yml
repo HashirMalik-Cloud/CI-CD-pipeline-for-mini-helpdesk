@@ -3,12 +3,12 @@ name: Terraform Plan
 on:
   pull_request:
     branches:
-      - develop
       - main
+      - develop
 
 jobs:
   terraform:
-    name: Terraform Plan
+    name: Terraform Plan (Default Workspace)
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -36,27 +36,29 @@ jobs:
           key: ${{ runner.os }}-terraform-${{ hashFiles('infra/.terraform.lock.hcl') }}
 
       - name: Install & Build Backend
+        working-directory: backend
         run: |
-          cd backend
+          set -e
           npm ci
           npm run build
-
-      - name: Terraform Init + Workspace Select
-        working-directory: infra
-        run: |
-          # Determine workspace and backend key based on PR target branch
-          if [[ "${GITHUB_BASE_REF}" == "main" ]]; then
-            WORKSPACE="prod"
-          else
-            WORKSPACE="staging"
+          if [ ! -f dist/tickets.js ]; then
+            echo "❌ ERROR: dist/tickets.js missing"
+            exit 1
           fi
 
+      - name: Copy Built Lambda to Infra
+        run: |
+          mkdir -p infra/backend-dist
+          cp backend/dist/tickets.js infra/backend-dist/
+
+      - name: Terraform Init
+        working-directory: infra
+        run: |
           terraform init \
             -backend-config="bucket=hashir-tf-remote-state" \
-            -backend-config="key=mini-helpdesk/${WORKSPACE}/infra.tfstate" \
-            -backend-config="region=us-east-1"
-
-          terraform workspace select $WORKSPACE || terraform workspace new $WORKSPACE
+            -backend-config="key=mini-helpdesk/default/infra.tfstate" \
+            -backend-config="region=us-east-1" \
+            -reconfigure
 
       - name: Validate Terraform
         working-directory: infra

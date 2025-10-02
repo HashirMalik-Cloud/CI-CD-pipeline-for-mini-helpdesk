@@ -1,18 +1,17 @@
-name: Terraform Apply (Staging)
+name: Terraform Apply
 
 on:
   push:
     branches:
-      - main   # ✅ Run automatically for staging deploys
+      - main  # Run automatically on main branch
 
 jobs:
   terraform:
-    name: Apply to Staging
+    name: Apply Terraform (Default Workspace)
     runs-on: ubuntu-latest
     permissions:
-      id-token: write    # Required for OIDC
+      id-token: write
       contents: read
-    environment: staging
 
     steps:
       - name: Checkout repo
@@ -41,49 +40,29 @@ jobs:
         working-directory: backend
         run: |
           set -e
-          echo "📦 Installing backend dependencies..."
           npm ci
-          echo "🔨 Building backend..."
           npm run build
           if [ ! -f dist/tickets.js ]; then
             echo "❌ ERROR: dist/tickets.js missing"
             exit 1
           fi
-          echo "✅ Backend build complete"
 
       - name: Copy Built Lambda to Infra
         run: |
           mkdir -p infra/backend-dist
           cp backend/dist/tickets.js infra/backend-dist/
-          echo "✅ Copied tickets.js to infra/backend-dist"
 
-      - name: Terraform Init + Validate Workspace
+      - name: Terraform Init
         working-directory: infra
         run: |
           terraform init \
             -backend-config="bucket=hashir-tf-remote-state" \
-            -backend-config="key=mini-helpdesk/staging/infra.tfstate" \
-            -backend-config="region=us-east-1"
+            -backend-config="key=mini-helpdesk/default/infra.tfstate" \
+            -backend-config="region=us-east-1" \
+            -reconfigure
 
-          # Fail if staging does not exist (don't auto-create)
-          if ! terraform workspace list | grep -q "staging"; then
-            echo "❌ ERROR: Terraform workspace 'staging' does not exist. Please create it manually."
-            exit 1
-          fi
-
-          terraform workspace select staging
-          echo "✅ Selected Terraform workspace: staging"
-
-          # 🚀 Unlock any stale lock automatically
-          LOCK_ID=$(terraform force-unlock -list 2>/dev/null | grep -oE '[0-9a-f-]+' || true)
-          if [ ! -z "$LOCK_ID" ]; then
-            echo "⚠️ Found stale lock ($LOCK_ID), unlocking..."
-            terraform force-unlock -force "$LOCK_ID" || true
-          fi
-
-      - name: Terraform Apply (Staging)
+      - name: Terraform Apply
         working-directory: infra
         run: |
-          terraform apply -auto-approve -no-color -lock-timeout=5m \
+          terraform apply -auto-approve -no-color \
             -var="frontend_bucket_name=${{ secrets.AWS_S3_BUCKET }}"
-          echo "✅ Terraform Apply completed for staging"
