@@ -64,5 +64,4 @@ jobs:
       - name: Terraform Apply
         working-directory: infra
         run: |
-          terraform apply -auto-approve -no-color \
-            -var="frontend_bucket_name=${{ secrets.AWS_S3_BUCKET }}"
+          terraform apply -auto-approve -no-color
