@@ -57,7 +57,7 @@ jobs:
         run: |
           terraform init \
             -backend-config="bucket=hashir-tf-remote-state" \
-            -backend-config="key=mini-helpdesk/default/infra.tfstate" \
+            -backend-config="key=mini-helpdesk/dev/infra.tfstate" \
             -backend-config="region=us-east-1" \
             -reconfigure
 
