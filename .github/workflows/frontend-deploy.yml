@@ -2,9 +2,9 @@ name: Frontend Deploy to S3
 
 on:
   push:
-    branches:
-      - develop   # deploy develop branch (staging)
-      - main      # deploy main branch (production)
+    paths:
+      - 'infra/**'
+
 
 jobs:
   deploy:
