@@ -1,6 +1,7 @@
 variable "sns_notification_email" {
   description = "Email address that should receive ticket notifications"
   type        = string
+  default     = "hashir.gggggggg@gmail.com"
 }
 
 # Create SNS Topic
