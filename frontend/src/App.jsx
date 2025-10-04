@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 
 // API base URL (replace with your deployed backend API Gateway endpoint)
-const API_BASE = "https://8i4oy3ye3h.execute-api.us-east-1.amazonaws.com/dev"
+const API_BASE = "https://6p3ot7jnei.execute-api.us-east-1.amazonaws.com/dev"
 export default function App() {
   const [tickets, setTickets] = useState([])
   const [loading, setLoading] = useState(false)
