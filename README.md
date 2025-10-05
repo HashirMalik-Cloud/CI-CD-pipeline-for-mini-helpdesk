@@ -4,100 +4,142 @@
 ![Terraform Plan](https://github.com/HashirMalik-Cloud/C-CD-pipeline-for-mini-helpdesk/actions/workflows/tf-plan.yml/badge.svg)
 ![Frontend Deploy](https://github.com/HashirMalik-Cloud/C-CD-pipeline-for-mini-helpdesk/actions/workflows/frontend-deploy.yml/badge.svg)
 
-🧾 Mini Helpdesk — Serverless Support Ticketing System
-💡 Overview
+# 🧾 Mini Helpdesk — Serverless Support Ticketing System
 
-Mini Helpdesk is a small but production-ready support ticketing app — built entirely on AWS using modern CI/CD and IaC practices.
-It’s designed to mimic a real business use case (like a simplified Freshdesk or Zendesk) where users can submit support tickets, attach files, and receive email alerts — all powered by a fully automated, scalable backend.
+![Architecture Diagram](Architecture%20diagram.png)
+![Frontend UI](Frontend%20Picture.PNG)
 
-This project demonstrates:
+🎥 **[Watch Demo on YouTube](https://youtu.be/lZ4lR4x31Y4?si=h38aZslTHoYQ_-CT)**  
 
-Real-world AWS serverless architecture
+---
 
-Full CI/CD automation with GitHub Actions
+## 💡 What’s This Project About?
 
-Secure Infrastructure as Code (IaC) via Terraform
+**Mini Helpdesk** is a small yet production-ready **support ticketing system** — built fully on **AWS**, following modern **DevOps, CI/CD, and Infrastructure as Code** practices.  
 
-Zero-downtime deploys, monitoring, and observability
+Think of it as a simplified version of platforms like **Freshdesk or Zendesk**, where users can create support tickets, attach files, and get automatic email notifications — all powered by a scalable, serverless backend.  
 
-🧰 Tech Stack & Architecture
-⚙️ CI/CD
+This project was designed to **feel real**, showing how a cloud-native app runs in production with automation, security, and observability baked in.
 
-GitHub Actions — Automates plan/apply/test pipelines.
+---
 
-Uses OIDC for AWS authentication (no long-lived secrets).
+## 🧠 What You’ll Learn from This Project
+This project demonstrates how to build and automate a **real-world AWS serverless architecture**, including:
 
-Separate workflows for Terraform plan, apply, and frontend deploy.
+✅ Fully automated **CI/CD pipelines** with GitHub Actions  
+✅ Secure, versioned **Infrastructure as Code (Terraform)**  
+✅ **Zero-downtime** deployments  
+✅ **Observability** with CloudWatch and X-Ray  
+✅ Scalable, event-driven design (SQS + SNS + Lambda)  
 
-🏗️ Infrastructure as Code
+---
 
-Terraform — All infrastructure is defined as code for easy reproducibility and multi-environment setup.
+## ⚙️ CI/CD — Automated from Code to Cloud
 
-☁️ AWS (Serverless, Low Cost, Production Ready)
+- **GitHub Actions** handles planning, applying, and deploying automatically.  
+- Uses **OIDC authentication** for secure AWS access (no stored secrets).  
+- Has separate workflows for:
+  - Terraform Plan  
+  - Terraform Apply  
+  - Frontend Build & Deploy  
 
-API Gateway + Lambda (Node.js 20): RESTful API, scalable and event-driven.
+You just push your code — everything else happens automatically. 🚀
 
-DynamoDB: Stores ticket data with auto-scaling and minimal idle cost.
+---
 
-S3 (2 buckets): One for attachments, one for hosting the React SPA — fronted by CloudFront for global delivery.
+## 🏗️ Infrastructure as Code (IaC)
 
-SQS + Worker Lambda: Handles background notifications asynchronously.
+Everything is defined in **Terraform** — including IAM roles, queues, buckets, Lambdas, and API Gateway.  
+That means you can spin up or destroy the entire system with just a few commands.
 
-SNS: Sends email notifications to the support inbox when new tickets are created.
+This ensures:
+- Consistency across environments  
+- Easy replication for dev/stage/prod setups  
+- Secure and predictable deployments  
 
-SSM Parameter Store: Securely stores configuration and API keys.
+---
 
-CloudWatch Logs + Alarms + X-Ray: Provides deep observability and error tracking.
+## ☁️ AWS Architecture — Fully Serverless
 
-IAM (OIDC roles per environment): Enforces least-privilege access and secure workflows.
+| Service | Purpose |
+|----------|----------|
+| **API Gateway + Lambda (Node.js 20)** | REST API for tickets |
+| **DynamoDB** | Ticket storage (fast, scalable, low-cost) |
+| **S3 + CloudFront** | Frontend hosting and file uploads |
+| **SQS + Worker Lambda** | Asynchronous background processing |
+| **SNS** | Sends email notifications on new tickets |
+| **SSM Parameter Store** | Stores environment configs |
+| **CloudWatch + X-Ray** | Logging, tracing, and monitoring |
+| **IAM (OIDC Roles)** | Secure, least-privilege access |
 
-💻 Frontend
+---
 
-React + Vite SPA (hosted on S3 + CloudFront)
+## 💻 Frontend — Modern, Fast, and Simple
+
+Built using **React + Vite**, hosted on **S3 + CloudFront** for global performance.
 
 Users can:
+- 📝 Create new support tickets  
+- 📎 Upload attachments (via pre-signed S3 URLs)  
+- 🔄 Track and update ticket statuses (Open → In Progress → Resolved)
 
-Create a new ticket (title, description, priority)
+---
 
-Upload attachments (via pre-signed S3 URLs)
+## 🔙 Backend — Simple but Powerful
 
-View and update ticket status (Open → In Progress → Resolved)
+- **POST /tickets** — Create new tickets, validate inputs, upload attachments, and send to SQS.  
+- **GET /tickets** — Fetch all tickets (with optional filters).  
+- **PATCH /tickets/{id}** — Update ticket status or notes.  
 
-🔙 Backend
+The backend is **stateless and event-driven**, ensuring reliability and scalability.
 
-Lambda (via API Gateway) exposes routes:
+---
 
-POST /tickets — Validates and stores tickets, issues upload URLs, and sends messages to SQS.
+## 🧵 Worker Lambda — Background Processing
 
-GET /tickets — Retrieves all tickets (with filters).
+- Triggered automatically by **SQS**  
+- Reads messages and publishes them to **SNS**  
+- SNS then sends an **email notification** to the support team  
 
-PATCH /tickets/{id} — Updates ticket status or notes.
+All background tasks run asynchronously — keeping the API fast and responsive.
 
-🧵 Worker
+---
 
-Lambda (SQS Consumer):
-Reads messages from SQS and publishes to SNS — which triggers an email notification to the configured support address.
+## 🔐 Security by Design
 
-🔐 Security
+- **API Gateway Key + Usage Plan** — Controls access and prevents abuse  
+- **IAM Roles (OIDC)** — Enforces least privilege  
+- **Terraform-managed IAM** — No manual keys  
+- Optional upgrade to **Cognito/JWT** for user-level authentication  
 
-API Gateway Key + Usage Plan for controlled access and rate limiting.
+---
 
-Optionally upgradable to Cognito/JWT auth for user-based access.
+## 🧑‍💼 In Plain Words
 
-🧑‍💼 In Plain Words
+Mini Helpdesk lets users submit support tickets, upload attachments, and stay updated via email — just like a real customer support system.  
+Admins can review, manage, and resolve those tickets.  
 
-This app lets a user create support tickets, attach screenshots, and track their progress.
-Admins can update ticket statuses, and automatic email alerts keep the support team informed.
-It’s a realistic, small-scale SaaS-style app — perfect to showcase your DevOps, Cloud, and IaC skills.
+It’s the perfect small-scale **SaaS-style project** to demonstrate your **DevOps, Cloud, and Infrastructure-as-Code skills**.
 
-🚀 Tech Summary
-Layer	Tool	Purpose
-CI/CD	GitHub Actions	Automate Terraform & Frontend deploys
-IaC	Terraform	Code-based infra management
-Backend	AWS Lambda + API Gateway	Serverless APIs
-Database	DynamoDB	Ticket storage
-Storage	S3	File uploads & hosting frontend
-Async	SQS + SNS	Background notifications
-Observability	CloudWatch + X-Ray	Monitoring & tracing
-Auth	IAM + API Keys	Secure access
-Frontend	React + Vite	Modern, fast web UI
+---
+
+## 🚀 Quick Tech Summary
+
+| Layer | Tool | Purpose |
+|--------|------|----------|
+| CI/CD | **GitHub Actions** | Automate Terraform + Frontend deployments |
+| IaC | **Terraform** | Manage infrastructure as code |
+| Backend | **AWS Lambda + API Gateway** | Serverless APIs |
+| Database | **DynamoDB** | Ticket storage |
+| Storage | **S3** | File uploads + Frontend hosting |
+| Async | **SQS + SNS** | Background notifications |
+| Monitoring | **CloudWatch + X-Ray** | Logs & tracing |
+| Auth | **IAM + API Keys** | Secure access |
+| Frontend | **React + Vite** | Fast web UI |
+
+---
+
+⭐ **If you like this project, consider giving it a star on GitHub!**  
+It’s a great example of how to blend **AWS Cloud, Terraform, and CI/CD** into one complete system.
+
+---
